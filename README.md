@@ -6,16 +6,20 @@ Consider a game with $N$ players, denoted as $\{1, \dots, N\}$.
 
 ### Action Space
 Each player $i \in \{1, \dots, N\}$ can choose an action $a^i$ from the action space $\mathcal{A}$. The collection of actions from all players is referred to as the **population profile of actions**, denoted by:
+
 $$
 \underline{a} = \{a^1, a^2, \dots, a^N\} \in \mathcal{A}^N
 $$
 
 ### Cost Function
 Each player $i$ has a cost function $f^i(\underline{a})$, where:
+
 $$
 f^i : \mathcal{A}^N \to \mathbb{R}
 $$
+
 The goal of each player is to minimize their cost by selecting an optimal action:
+
 $$
 \min_{a^i} f^i(\underline{a}) \quad \forall i \in \{1, \dots, N\}.
 $$
@@ -34,11 +38,13 @@ In the static setting, the **state** of each player is fixed and does not change
 ### Definition: Nash Equilibrium (NE)
 
 A population profile $\hat{\underline{a}} = \{\hat{a}^1, \dots, \hat{a}^N\} \in \mathcal{A}^N$ is a **Nash Equilibrium (NE)** if:
+
 $$
 f^i(\hat{\underline{a}}) \leq f^i(a^i, \hat{\underline{a}}^{-i}) \quad \forall a^i \in \mathcal{A}, \, \forall i \in \{1, \dots, N\}.
 $$
 
 Here, $\hat{\underline{a}}^{-i}$ represents the actions of all players except player $i$, that is:
+
 $$
 \hat{\underline{a}}^{-i} = \{\hat{a}^1, \dots, \hat{a}^{i-1}, \hat{a}^{i+1}, \dots, \hat{a}^N\}.
 $$
@@ -54,6 +60,7 @@ Here are a few examples to illustrate Nash Equilibrium in different settings:
 
 #### 1. **Target Position with No Interaction**
 Each player chooses an action $a^i$ to minimize the distance to a fixed target position $a^* \in \mathcal{A}$:
+
 $$
 f^i(\underline{a}) = |a^i - a^*|
 $$
@@ -65,9 +72,11 @@ $$
 
 #### 2. **Attraction Through the Mean**
 Players are attracted to the mean position of the group, aiming to minimize the distance between their action and the average action:
+
 $$
 f^i(\underline{a}) = |a^i - \bar{a}|
 $$
+
 where $\bar{a} = \frac{1}{N} \sum_{j=1}^N a^j$ is the mean of the population profile.
 
 - **Equilibrium:** Any population profile $\underline{a}$ where all players choose the same action, $a^i = c$ for some constant $c$, is a Nash Equilibrium.
@@ -77,9 +86,11 @@ where $\bar{a} = \frac{1}{N} \sum_{j=1}^N a^j$ is the mean of the population pro
 
 #### 3. **Group Aversion**
 Players aim to avoid choosing the same action as others, minimizing the number of players taking the same action:
+
 $$
 f^i(\underline{a}) = \sum_{j \neq i} \mathbf{1}_{a^j = a^i}
 $$
+
 where $\mathbf{1}_{a^j = a^i}$ is an indicator function that equals 1 if $a^j = a^i$ and 0 otherwise.
 
 - **Equilibrium:** Players spread out across the action space $\mathcal{A}$ to ensure no two players choose the same action, if the size of $\mathcal{A}$ allows it.
@@ -120,25 +131,31 @@ In the **Prisoner's Dilemma**, two players decide whether to cooperate ($C$) or 
 In a **mixed strategy** setting, each player does not choose a deterministic action $a^i \in \mathcal{A}$ but instead selects actions according to a probability distribution $\pi^i \in \mathcal{P}(\mathcal{A})$, where $\mathcal{P}(\mathcal{A})$ denotes the set of all probability measures over the action space $\mathcal{A}$. 
 
 The **population profile of strategies** is then represented by:
+
 $$
 \underline{\pi} = \{\pi^1, \pi^2, \dots, \pi^N\} \in \mathcal{P}(\mathcal{A})^N,
 $$
+
 and a realization of actions from these strategies is denoted by:
+
 $$
 \underline{a} = \{a^1, a^2, \dots, a^N\} \sim \underline{\pi}.
 $$
 
 ### Empirical Distribution of Actions
 Given the population profile of actions $\underline{a}$, the **empirical distribution** of actions is:
+
 $$
 \mu_{\underline{a}} = \frac{1}{N} \sum_{j=1}^N \delta_{a^j},
 $$
+
 where $\delta_{a^j}$ is the Dirac measure centered at $a^j$. 
 
 As $N \to \infty$, this empirical distribution $\mu_{\underline{a}}$ becomes less random and converges to a deterministic measure reflecting the population's mixed strategies. This limit is governed by the Law of Large Numbers.
 
 ### Cost Function with Mixed Strategies
 The cost for player $i$ is now defined as the expected value of their payoff under the distribution of all players' strategies:
+
 $$
 J^i(\underline{\pi}) = \mathbb{E}_{\underline{a} \sim \underline{\pi}}[f^i(\underline{a})].
 $$
@@ -149,6 +166,7 @@ Here:
 
 ### Nash Equilibrium in Mixed Strategies
 A mixed strategy profile $\hat{\underline{\pi}} = \{\hat{\pi}^1, \dots, \hat{\pi}^N\}$ is a Nash Equilibrium if:
+
 $$
 J^i(\hat{\underline{\pi}}) \leq J^i(\pi^i, \hat{\underline{\pi}}^{-i}) \quad \forall \pi^i \in \mathcal{P}(\mathcal{A}), \, \forall i \in \{1, \dots, N\}.
 $$
@@ -170,15 +188,19 @@ In a **static mean field game**, we analyze the interaction of a large number of
 - **Anonymity**: Each player's cost depends on their own action and the overall distribution of actions, not on the identity of other players.
 
 The cost function for a representative player is defined as:
+
 $$
 f: \mathcal{A} \times \mathcal{P}(\mathcal{A}) \to \mathbb{R},
 $$
+
 where $\mathcal{P}(\mathcal{A})$ is the set of all probability measures on the action space $\mathcal{A}$. 
 
 For a finite population of $N$ players, the cost for player $i$ is:
+
 $$
 f^i(\underline{a}) = f(a^i, \mu_{\underline{a}}),
 $$
+
 where:
 - $a^i$ is the action of player $i$.
 - $\mu_{\underline{a}} = \frac{1}{N} \sum_{j=1}^N \delta_{a^j}$ is the **empirical distribution** of the population's actions.
@@ -193,9 +215,11 @@ As the number of players $N \to \infty$, the empirical distribution $\mu_{\under
 
 #### Goal for Each Player
 In the mean field setting, each player minimizes their expected cost given the population distribution $\pi'$:
+
 $$
 J(\pi, \pi') = \mathbb{E}_{a \sim \pi}[f(a, \pi')],
 $$
+
 where:
 - $\pi \in \mathcal{P}(\mathcal{A})$ is the player's strategy.
 - $\pi'$ is the population distribution of actions.
@@ -216,15 +240,19 @@ In a **static mean field game**, we analyze the interaction of a large number of
 - **Anonymity**: Each player's cost depends on their own action and the overall distribution of actions, not on the identity of other players.
 
 The cost function for a representative player is defined as:
+
 $$
 f: \mathcal{A} \times \mathcal{P}(\mathcal{A}) \to \mathbb{R},
 $$
+
 where $\mathcal{P}(\mathcal{A})$ is the set of all probability measures on the action space $\mathcal{A}$. 
 
 For a finite population of $N$ players, the cost for player $i$ is:
+
 $$
 f^i(\underline{a}) = f(a^i, \mu_{\underline{a}}),
 $$
+
 where:
 - $a^i$ is the action of player $i$.
 - $\mu_{\underline{a}} = \frac{1}{N} \sum_{j=1}^N \delta_{a^j}$ is the **empirical distribution** of the population's actions.
@@ -240,22 +268,28 @@ As the number of players $N \to \infty$, the empirical distribution $\mu_{\under
 #### Definition: Mean Field Nash Equilibrium
 A **Mean Field Nash Equilibrium** is a pair $(\hat{\pi}, \pi')$ where:
 1. The player minimizes their expected cost given the population distribution $\pi'$:
-   $$
-   \hat{\pi} = \arg\min_{\pi \in \mathcal{P}(\mathcal{A})} J(\pi, \pi'),
-   $$
+   
+$$
+\hat{\pi} = \arg\min_{\pi \in \mathcal{P}(\mathcal{A})} J(\pi, \pi'),
+$$
+   
    where the expected cost is:
-   $$
-   J(\pi, \pi') = \mathbb{E}_{a \sim \tilde{\pi}}[f(a, \pi')].
-   $$
-2. The player's optimal strategy $\hat{\pi}$ matches the population distribution $\pi'$:
-   $$
-   \hat{\pi} = \pi'.
-   $$
+
+$$
+J(\pi, \pi') = \mathbb{E}_{a \sim \tilde{\pi}}[f(a, \pi')].
+$$
+   
+3. The player's optimal strategy $\hat{\pi}$ matches the population distribution $\pi'$:
+   
+$$
+\hat{\pi} = \pi'.
+$$
 
 ---
 
 #### Fixed Point Formulation
 The Mean Field Nash Equilibrium can equivalently be characterized as a **fixed point**:
+
 $$
 \pi' \in  \arg\min_{\pi \in \mathcal{P}(\mathcal{A})} \mathbb{E}_{a \sim \pi}[f(a, \pi')].
 $$
@@ -270,9 +304,11 @@ An **$\epsilon$-Nash Equilibrium** is a relaxed version of the Nash Equilibrium 
 
 #### Definition
 A mixed strategy profile $\hat{\underline{\pi}} = \{\hat{\pi}^1, \dots, \hat{\pi}^N\}$ is an **$\epsilon$-Nash Equilibrium** if for every player $i$:
+
 $$
 J(\hat{\pi}^i, \hat{\pi}^{-i}) \leq J(\pi^i, \hat{\pi}^{-i}) + \epsilon \quad \forall \pi^i \in \mathcal{P}(\mathcal{A}),
 $$
+
 where:
 - $J(\pi^i, \hat{\pi}^{-i})$ is the expected cost for player $i$ when they use strategy $\pi^i$ and all other players use $\hat{\pi}^{-i}$.
 - $\hat{\pi}^{-i} = \{\hat{\pi}^1, \dots, \hat{\pi}^{i-1}, \hat{\pi}^{i+1}, \dots, \hat{\pi}^N\}$ denotes the strategies of all other players.
@@ -299,13 +335,17 @@ The slide provides a proof sketch for an **Approximate Nash Equilibrium (NE)** i
 
 ### 1. **Proof Idea**  
 The goal is to compare the cost of the $N$-player game to the mean field game cost. Specifically:
+
 $$
 J^i(\hat{\pi}, \hat{\pi}^{-i}) - J^i(\pi, \hat{\pi}^{-i}),
 $$
+
 is decomposed as:
+
 $$
 = J^i(\hat{\pi}, \hat{\pi}^{-i}) - J(\hat{\pi}, \hat{\pi}) + J(\hat{\pi}, \hat{\pi}) - J(\pi, \hat{\pi}) + J(\pi, \hat{\pi}) - J^i(\pi, \hat{\pi}^{-i}),
 $$
+
 into three parts:
 1. The first term relates to differences between the $N$-player game cost and the mean field cost.
 2. The second term captures the difference between mean field costs for $\hat{\pi}$ and $\pi$.
@@ -323,9 +363,11 @@ into three parts:
 ### 3. **Key Observations**
 - **Lipschitz property of $\phi$:**
   The cost function $\phi$ is assumed to be Lipschitz, meaning:
-  $$
-  |\phi(a^i, \tilde{a}) - \phi(a^i, \hat{a})| \leq C|\tilde{a} - \hat{a}|,
-  $$
+  
+$$
+|\phi(a^i, \tilde{a}) - \phi(a^i, \hat{a})| \leq C|\tilde{a} - \hat{a}|,
+$$
+  
   where $C$ is the Lipschitz constant.
 
 - **Approximation of $\tilde{a}$ by $\hat{a}$:**
