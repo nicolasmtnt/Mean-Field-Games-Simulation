@@ -415,7 +415,7 @@ into three parts:
 This repository contains a Python implementation of an SEIR (Susceptible–Exposed–Infected–Recovered) model extended to include **behavioral dynamics**. The behavioral component introduces an **effort variable** $b(t)$ (representing contact reduction actions) that individuals can choose to minimize their own infection risk at some cost. We compare two scenarios:
 
 1. **Nash Equilibrium**: Each individual optimizes their own cost in a decentralized manner (self-interest).
-2. **Societal Optimum**: A central planner (or the society as a whole) selects the effort trajectory $ b(t) $ to minimize the total societal cost.
+2. **Societal Optimum**: A central planner (or the society as a whole) selects the effort trajectory $b(t)$ to minimize the total societal cost.
 
 The model integrates the **Pontryagin’s Maximum Principle** (via costate variables) and **gradient-based iterative methods** to solve for equilibrium strategies.  
 
@@ -438,18 +438,18 @@ R'(t) &= \gamma \, I(t).
 $$
 
 
-- $ S(t) $ is the proportion of susceptible individuals.  
-- $ E(t) $ is the proportion of exposed (infected but not yet infectious).  
-- $ I(t) $ is the proportion of infectious individuals.  
-- $ R(t) $ is the proportion of recovered (or removed) individuals.  
-- $ \beta(t) $ is the effective contact rate (transmission rate).  
-- $ \alpha $ is the rate at which exposed individuals become infectious ($\frac{1}{\alpha}$ is the latent period).  
-- $ \gamma $ is the recovery rate ($\frac{1}{\gamma}$ is the average infectious period).  
+- $S(t)$ is the proportion of susceptible individuals.  
+- $E(t)$ is the proportion of exposed (infected but not yet infectious).  
+- $I(t)$ is the proportion of infectious individuals.  
+- $R(t)$ is the proportion of recovered (or removed) individuals.  
+- $\beta(t)$ is the effective contact rate (transmission rate).  
+- $\alpha$ is the rate at which exposed individuals become infectious ($\frac{1}{\alpha}$ is the latent period).  
+- $\gamma$ is the recovery rate ($\frac{1}{\gamma}$ is the average infectious period).  
 
-We assume a **basic reproduction number** $ R_0 $ at baseline, giving a baseline transmission rate $ \beta_0 = R_0 \, \gamma $.  
+We assume a **basic reproduction number** $R_0$ at baseline, giving a baseline transmission rate $\beta_0 = R_0 \, \gamma$.  
 
 ### 2.2. Behavioral Dynamics
-We let individuals choose an **effort** $ b(t) \in [0, \beta_0] $ to reduce their contact rate. Effectively, the transmission rate becomes:
+We let individuals choose an **effort** $b(t) \in [0, \beta_0]$ to reduce their contact rate. Effectively, the transmission rate becomes:
 
 
 $$
@@ -461,8 +461,8 @@ $$
 
 **Cost Components**:
 
-1. **Effort cost**: $ \text{cost}_\text{effort}(b) $.  
-2. **Infection cost**: A per-capita cost $ r_I $ upon infection.  
+1. **Effort cost**: $\text{cost}_\text{effort}(b)$.  
+2. **Infection cost**: A per-capita cost $r_I$ upon infection.  
 
 In this example, we used a specific functional form for the effort cost:
 
@@ -470,14 +470,14 @@ $$
 \text{cost}_\text{effort}(b) = \frac{\beta_0}{b} \;-\; 1,
 $$
 
-which increases as $ b $ goes to 0 (i.e., it’s “harder” to keep $ b $ near 0).  
+which increases as $b$ goes to 0 (i.e., it’s “harder” to keep $b$ near 0).  
 
 ### 2.3. Nash Equilibrium
 
-Under the **Nash** scenario, each individual chooses $ b(t) $ to minimize **their own** expected cost. We incorporate two additional state variables:
+Under the **Nash** scenario, each individual chooses $b(t)$ to minimize **their own** expected cost. We incorporate two additional state variables:
 
-- $ P(t) $: Probability that a representative individual will **eventually become infected** (from the perspective of time $ t $).  
-- $ C(t) $: Accumulated cost to this individual (effort + infection cost).  
+- $P(t)$: Probability that a representative individual will **eventually become infected** (from the perspective of time $t$).  
+- $C(t)$: Accumulated cost to this individual (effort + infection cost).  
 
 To track these, we define:
 
@@ -485,18 +485,18 @@ To track these, we define:
 $$
 \begin{aligned}
 P'(t) &= b(t) \, I(t) \,\bigl(1 - P(t)\bigr), \\
-C'(t) &= \Bigl[\text{cost}_\text{effort}\bigl(b(t)\bigr) \;+\; \text{cost}_\text{infection}(I(t)) \cdot b(t)\,I(t)\Bigr] \cdot \bigl(1 - P(t)\bigr).
+C'(t) &= \Bigl(\text{cost}_\text{effort}\bigl(b(t)\bigr) + \text{cost}_\text{infection}(I(t)) \cdot b(t)\,I(t)\Bigr) \cdot \bigl(1 - P(t)\bigr).
 \end{aligned}
 $$
 
 
-- $ (1 - P(t)) $ captures the fraction of individuals not yet infected by time $t$.  
-- If an individual is already infected ($ P(t) = 1 $), their incremental cost from infection does not increase further.
+- $(1 - P(t))$ captures the fraction of individuals not yet infected by time $t$.  
+- If an individual is already infected ($P(t) = 1$), their incremental cost from infection does not increase further.
 
 Because each individual only considers **their own** risk, the costate variables that arise from the Pontryagin Maximum Principle will reflect a **self-interested** perspective.
 
 #### Nash Pontryagin System
-For each state $ S, E, I $, there is a corresponding costate $ y_S(t), y_E(t), y_I(t) $. These costates satisfy backward differential equations derived by:
+For each state $S, E, I$, there is a corresponding costate $y_S(t), y_E(t), y_I(t)$. These costates satisfy backward differential equations derived by:
 
 $$
 \frac{d y_S}{dt} = - \frac{\partial H}{\partial S}, \quad
@@ -514,7 +514,7 @@ H = \Bigl[\text{cost}_\text{effort}(b(t)) + r_I \, b(t)\,I(t)\Bigr](1 - P(t))
 $$
 
 
-We then solve these costate equations **backwards in time**, applying terminal conditions $ y_S(T_\text{max}) = 0, y_E(T_\text{max}) = 0, y_I(T_\text{max}) = 0 $.  
+We then solve these costate equations **backwards in time**, applying terminal conditions $y_S(T_\text{max}) = 0, y_E(T_\text{max}) = 0, y_I(T_\text{max}) = 0$.  
 
 ### 2.4. Societal Optimum
 In the **societal** scenario, a central planner chooses $ b(t) $ to minimize the **aggregate cost**:
@@ -586,6 +586,7 @@ We define a function `beta_constant(time)` returning $\beta_0$, meaning no conta
 
 We expand the state to $(S, E, \log(I), R, P, C)$ and define:
 
+
 $$
 \begin{aligned}
 S'(t) &= - b(t)\,S(t)\,I(t), \\
@@ -632,11 +633,11 @@ $$
 
 
 ### 3.6. Gradient Calculation for Nash Equilibrium
-To find the function $ b(t) $ that satisfies the **best response** condition, we compute the **gradient** of the cost with respect to $ b(t) $. The gradient expression (heuristically) involves:
+To find the function $b(t)$ that satisfies the **best response** condition, we compute the **gradient** of the cost with respect to $b(t)$. The gradient expression (heuristically) involves:
 
 $$
 \frac{\partial}{\partial b} 
-\Bigl[\text{Effort Cost} + \text{Infection Cost} - \text{(term involving costates)}\Bigr].
+\text{Effort Cost} + \text{Infection Cost} - \text{(term involving costates)}.
 $$
 
 
@@ -652,17 +653,20 @@ $$
 
 ### 3.7. Nash Equilibrium Fixed-Point Iteration
 We perform an iterative procedure:
-1. Start with an initial guess $ b_\text{init}(t) $.  
-2. Solve forward the SEIR system to get $ (S(t), E(t), I(t), P(t)) $.  
-3. Solve backward the costate system to get $ (y_S(t), y_E(t), y_I(t)) $.  
-4. Compute the gradient of the cost wrt $ b(t) $.  
-5. Update $ b(t) $ via a gradient descent step:
+1. Start with an initial guess $b_\text{init}(t)$.  
+2. Solve forward the SEIR system to get $(S(t), E(t), I(t), P(t))$.  
+3. Solve backward the costate system to get $(y_S(t), y_E(t), y_I(t))$.  
+4. Compute the gradient of the cost wrt $b(t)$.  
+5. Update $b(t)$ via a gradient descent step:
    
 $$
-   b_{\text{new}}(t) = b_{\text{old}}(t) - \eta \,\nabla_{b}J(t),
-   $$
 
-   and clip $ b_{\text{new}}(t) \in [b_\text{min}, \beta_0]. $  
+b_{\text{new}}(t) = b_{\text{old}}(t) - \eta \,\nabla_{b}J(t)
+
+$$
+
+and clip $b_{\text{new}}(t) \in [b_\text{min}, \beta_0].$  
+
 6. Repeat until convergence or max iterations.
 
 ### 3.8. Societal Optimum (Implementation)
