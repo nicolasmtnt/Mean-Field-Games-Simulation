@@ -402,28 +402,6 @@ into three parts:
 
 ---
 
-### 2. **Notation**
-- $\hat{a} = \mathbb{E}_{a \sim \hat{\pi}}[a]$: Expected action under $\hat{\pi}$.
-- $\tilde{a} = \frac{1}{N} \sum_{j=1}^N a^j$: Empirical average of actions.
-- $\phi(a, \tilde{a})$: Represents the cost function for a player $i$ based on their action $a$ and the empirical distribution $\tilde{a}$.
-
----
-
-### 3. **Key Observations**
-- **Lipschitz property of $\phi$:**
-  The cost function $\phi$ is assumed to be Lipschitz, meaning:
-  
-$$
-|\phi(a^i, \tilde{a}) - \phi(a^i, \hat{a})| \leq C|\tilde{a} - \hat{a}|,
-$$
-  
-  where $C$ is the Lipschitz constant.
-
-- **Approximation of $\tilde{a}$ by $\hat{a}$:**
-  The empirical mean $\tilde{a}$ converges to the population mean $\hat{a}$ as $N \to \infty$. The deviation is of the order $O(1/N)$.
-
----
-
 
 # SEIR Model with Behavioral Dynamics
 
