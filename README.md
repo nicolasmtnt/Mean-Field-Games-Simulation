@@ -1,5 +1,54 @@
 # Mean Field Games Simulation and Introduction: a Reinforcement Learning Approach in Python
 
+#### Table of Contents
+
+1. [Introduction](#introduction)
+2. [Mean Field Game in the Static Setting](#mean-field-game-in-the-static-setting)  
+   - [Action Space](#action-space)  
+   - [Cost Function](#cost-function)  
+   - [Static Setting](#static-setting)  
+   - [Nash Equilibrium (NE)](#nash-equilibrium-ne)  
+   - [Examples of Nash Equilibrium](#examples-of-nash-equilibrium)  
+     - [Target Position with No Interaction](#1-target-position-with-no-interaction)  
+     - [Attraction Through the Mean](#2-attraction-through-the-mean)  
+     - [Group Aversion](#3-group-aversion)  
+     - [Rock-Paper-Scissors](#4-rock-paper-scissors)  
+     - [Prisoner's Dilemma](#5-prisoners-dilemma)  
+   - [Mixed Strategy Nash Equilibrium](#mixed-strategy-nash-equilibrium)  
+
+3. [Static Mean Field Game](#static-mean-field-game)  
+   - [Homogeneity and Anonymity](#homogeneity-and-anonymity)  
+   - [Empirical Distribution of Actions](#empirical-distribution-of-actions)  
+   - [Passing to the Limit](#passing-to-the-limit)  
+   - [Mean Field Nash Equilibrium](#mean-field-nash-equilibrium)  
+
+4. [Approximate Nash Equilibrium](#approximate-nash-equilibrium)  
+   - [Proof Sketch for Approximate Nash Equilibrium](#proof-sketch-for-approximate-nash-equilibrium)  
+   - [Key Observations](#key-observations)  
+
+
+### Table of Contents
+1. [Overview](#overview)  
+2. [Mathematical Formulation](#mathematical-formulation)  
+   1. [Epidemiological Dynamics (SEIR)](#epidemiological-dynamics-seir)  
+   2. [Behavioral Dynamics](#behavioral-dynamics)  
+   3. [Nash Equilibrium](#nash-equilibrium)  
+   4. [Societal Optimum](#societal-optimum)  
+3. [Code Structure](#code-structure)  
+   1. [Global Parameters & Initialization](#global-parameters--initialization)  
+   2. [Cost Functions](#cost-functions)  
+   3. [Baseline SEIR Solution (No Effort)](#baseline-seir-solution-no-effort)  
+   4. [SEIR Dynamics with Additional State Variables](#seir-dynamics-with-additional-state-variables)  
+   5. [Costate Equations for Nash Equilibrium](#costate-equations-for-nash-equilibrium)  
+   6. [Gradient Calculation for Nash Equilibrium](#gradient-calculation-for-nash-equilibrium)  
+   7. [Nash Equilibrium Fixed-Point Iteration](#nash-equilibrium-fixed-point-iteration)  
+   8. [Societal Optimum](#societal-optimum-implementation)  
+   9. [Main Execution / Example](#main-execution--example)  
+4. [Dependencies](#dependencies)  
+5. [Usage Instructions](#usage-instructions)  
+6. [References](#references)  
+
+
 ## 1 Mean Field Game in the Static Setting
 
 Consider a game with $N$ players, denoted as $\{1, \dots, N\}$. 
@@ -374,3 +423,312 @@ $$
   The empirical mean $\tilde{a}$ converges to the population mean $\hat{a}$ as $N \to \infty$. The deviation is of the order $O(1/N)$.
 
 ---
+
+
+# SEIR Model with Behavioral Dynamics
+
+## 1. Overview
+
+![SEIR Model: Nash Equilibrium vs Societal Optimum](NashSocietal.png)
+
+![SEIR Model: Nash Convergence vs Societal Convergence](Convergence.png)
+
+
+This repository contains a Python implementation of an SEIR (Susceptible–Exposed–Infected–Recovered) model extended to include **behavioral dynamics**. The behavioral component introduces an **effort variable** $b(t)$ (representing contact reduction actions) that individuals can choose to minimize their own infection risk at some cost. We compare two scenarios:
+
+1. **Nash Equilibrium**: Each individual optimizes their own cost in a decentralized manner (self-interest).
+2. **Societal Optimum**: A central planner (or the society as a whole) selects the effort trajectory $ b(t) $ to minimize the total societal cost.
+
+The model integrates the **Pontryagin’s Maximum Principle** (via costate variables) and **gradient-based iterative methods** to solve for equilibrium strategies.  
+
+---
+
+## 2. Mathematical Formulation
+
+### 2.1. Epidemiological Dynamics (SEIR)
+
+We start with an SEIR model:
+
+
+$$
+\begin{aligned}
+S'(t) &= - \beta(t) \, S(t) \, I(t), \\
+E'(t) &= \beta(t) \, S(t) \, I(t) \;-\; \alpha \, E(t), \\
+I'(t) &= \alpha \, E(t) \;-\; \gamma \, I(t), \\
+R'(t) &= \gamma \, I(t).
+\end{aligned}
+$$
+
+
+- $ S(t) $ is the proportion of susceptible individuals.  
+- $ E(t) $ is the proportion of exposed (infected but not yet infectious).  
+- $ I(t) $ is the proportion of infectious individuals.  
+- $ R(t) $ is the proportion of recovered (or removed) individuals.  
+- $ \beta(t) $ is the effective contact rate (transmission rate).  
+- $ \alpha $ is the rate at which exposed individuals become infectious ($\frac{1}{\alpha}$ is the latent period).  
+- $ \gamma $ is the recovery rate ($\frac{1}{\gamma}$ is the average infectious period).  
+
+We assume a **basic reproduction number** $ R_0 $ at baseline, giving a baseline transmission rate $ \beta_0 = R_0 \, \gamma $.  
+
+### 2.2. Behavioral Dynamics
+We let individuals choose an **effort** $ b(t) \in [0, \beta_0] $ to reduce their contact rate. Effectively, the transmission rate becomes:
+
+
+$$
+\beta(t) = b(t).
+$$
+
+
+(Alternatively, you might set $\beta(t) = \beta_0 \cdot g(b(t))$ with some decreasing function $g$, but here we use a direct scaling for simplicity.)
+
+**Cost Components**:
+
+1. **Effort cost**: $ \text{cost}_\text{effort}(b) $.  
+2. **Infection cost**: A per-capita cost $ r_I $ upon infection.  
+
+In this example, we used a specific functional form for the effort cost:
+
+$$
+\text{cost}_\text{effort}(b) = \frac{\beta_0}{b} \;-\; 1,
+$$
+
+which increases as $ b $ goes to 0 (i.e., it’s “harder” to keep $ b $ near 0).  
+
+### 2.3. Nash Equilibrium
+
+Under the **Nash** scenario, each individual chooses $ b(t) $ to minimize **their own** expected cost. We incorporate two additional state variables:
+
+- $ P(t) $: Probability that a representative individual will **eventually become infected** (from the perspective of time $ t $).  
+- $ C(t) $: Accumulated cost to this individual (effort + infection cost).  
+
+To track these, we define:
+
+
+$$
+\begin{aligned}
+P'(t) &= b(t) \, I(t) \,\bigl(1 - P(t)\bigr), \\
+C'(t) &= \Bigl[\text{cost}_\text{effort}\bigl(b(t)\bigr) \;+\; \text{cost}_\text{infection}(I(t)) \cdot b(t)\,I(t)\Bigr] \cdot \bigl(1 - P(t)\bigr).
+\end{aligned}
+$$
+
+
+- $ (1 - P(t)) $ captures the fraction of individuals not yet infected by time $t$.  
+- If an individual is already infected ($ P(t) = 1 $), their incremental cost from infection does not increase further.
+
+Because each individual only considers **their own** risk, the costate variables that arise from the Pontryagin Maximum Principle will reflect a **self-interested** perspective.
+
+#### Nash Pontryagin System
+For each state $ S, E, I $, there is a corresponding costate $ y_S(t), y_E(t), y_I(t) $. These costates satisfy backward differential equations derived by:
+
+$$
+\frac{d y_S}{dt} = - \frac{\partial H}{\partial S}, \quad
+\frac{d y_E}{dt} = - \frac{\partial H}{\partial E}, \quad
+\frac{d y_I}{dt} = - \frac{\partial H}{\partial I},
+$$
+
+where $H$ is the Hamiltonian:
+
+$$
+H = \Bigl[\text{cost}_\text{effort}(b(t)) + r_I \, b(t)\,I(t)\Bigr](1 - P(t)) 
+\;+\; y_S(t) \, \bigl(\dots\bigr) 
+\;+\; y_E(t) \, \bigl(\dots\bigr) 
+\;+\; y_I(t) \, \bigl(\dots\bigr).
+$$
+
+
+We then solve these costate equations **backwards in time**, applying terminal conditions $ y_S(T_\text{max}) = 0, y_E(T_\text{max}) = 0, y_I(T_\text{max}) = 0 $.  
+
+### 2.4. Societal Optimum
+In the **societal** scenario, a central planner chooses $ b(t) $ to minimize the **aggregate cost**:
+
+$$
+\text{Total Cost} = \int_0^{T_\text{max}} \Bigl[ \text{cost}_\text{effort}(b(t))\cdot \text{Population} \;+\; \text{infection cost} \Bigr] \, dt,
+$$
+
+subject to the same SEIR constraints. The difference from Nash is that the costate equations now reflect **collective** objectives (e.g., the total fraction of the population infected), and not purely individual infection probabilities.  
+
+---
+
+## 3. Code Structure
+
+### 3.1. Global Parameters & Initialization
+- **Time Grid**:  
+  
+$$
+  T_\text{max} = 360 \, (\text{days}), \quad 
+  n_\text{max} = T_\text{max} + 1, \quad
+  t = \text{linspace}(0, T_\text{max}, n_\text{max}).
+  $$
+
+- **Epidemiological Parameters**:  
+  
+$$
+  \alpha = \frac{1}{5}, \quad
+  \gamma = \frac{1}{10}, \quad
+  R_0 = 2, \quad
+  \beta_0 = R_0 \,\gamma.
+  $$
+
+- **Cost**:  $ r_I = 300 $ (infection cost).  
+- **Initial Conditions**:  
+  
+$$
+  I(0) = 0.01,\quad E(0) = 0,\quad R(0) = 0,\quad S(0) = 1 - 0.01 = 0.99.
+  $$
+
+  For numerical stability, we store $\log(I)$ instead of $I$ in the ODE system.
+
+### 3.2. Cost Functions
+1. **Effort Cost**:
+   
+$$
+   \text{cost}_\text{effort}(b) = \frac{\beta_0}{b} - 1.
+   $$
+
+2. **Effort Cost Derivative**:
+   
+$$
+   \frac{d}{db} \Bigl[\text{cost}_\text{effort}(b)\Bigr] 
+   = \frac{d}{db}\Bigl[\beta_0 / b - 1\Bigr] 
+   = -\frac{\beta_0}{b^2}.
+   $$
+
+3. **Infection Cost**:
+   
+$$
+   \text{cost}_\text{infection}(I) = r_I = 300.
+   $$
+
+   (A constant for each infected individual.)
+
+### 3.3. Baseline SEIR Solution (No Effort)
+We define a function `beta_constant(time)` returning $\beta_0$, meaning no contact reduction. This acts as the baseline scenario.
+
+### 3.4. SEIR Dynamics with Additional State Variables
+
+We expand the state to $(S, E, \log(I), R, P, C)$ and define:
+
+$$
+\begin{aligned}
+S'(t) &= - b(t)\,S(t)\,I(t), \\
+E'(t) &= b(t)\,S(t)\,I(t) - \alpha \, E(t), \\
+\log(I)'(t) &= \frac{\alpha \, E(t)}{I(t)} - \gamma \quad \text{(if } I>1e^{-12}\text{)},\\
+R'(t) &= \gamma \, I(t), \\
+P'(t) &= b(t)\,I(t)\,\bigl(1 - P(t)\bigr), \\
+C'(t) &= \Bigl[\text{cost}_\text{effort}(b(t)) + \text{cost}_\text{infection}(I)\,b(t)\,I(t)\Bigr]\,(1 - P(t)).
+\end{aligned}
+$$
+
+
+These ODEs are numerically integrated forward in time using `odeint`.
+
+### 3.5. Costate Equations for Nash Equilibrium
+The costates $(y_S, y_E, y_I)$ satisfy backward ODEs derived by:
+
+
+$$
+\begin{aligned}
+\frac{d y_S}{dt} &= -\frac{\partial H}{\partial S}, \\
+\frac{d y_E}{dt} &= -\frac{\partial H}{\partial E}, \\
+\frac{d y_I}{dt} &= -\frac{\partial H}{\partial I}.
+\end{aligned}
+$$
+
+
+Here, the Hamiltonian $ H $ for each individual is:
+
+
+$$
+H = \Bigl[\text{cost}_\text{effort}(b(t)) + r_I \, b(t)\,I(t)\Bigr]\,(1 - P(t))
+\; + \; y_S(t)\,\frac{dS}{dt}
+\; + \; y_E(t)\,\frac{dE}{dt}
+\; + \; y_I(t)\,\frac{dI}{dt}.
+$$
+
+
+We define a function `deriv_costate_nash(...)` to compute:
+
+$$
+\frac{d y_S}{dt}, \quad \frac{d y_E}{dt}, \quad \frac{d y_I}{dt}.
+$$
+
+
+### 3.6. Gradient Calculation for Nash Equilibrium
+To find the function $ b(t) $ that satisfies the **best response** condition, we compute the **gradient** of the cost with respect to $ b(t) $. The gradient expression (heuristically) involves:
+
+$$
+\frac{\partial}{\partial b} 
+\Bigl[\text{Effort Cost} + \text{Infection Cost} - \text{(term involving costates)}\Bigr].
+$$
+
+
+In code, we approximate:
+
+$$
+\nabla_{b} J_\text{Nash}(t) 
+\approx \text{cost}_\text{effort}'(b(t))\,(1 - P(t)) 
++ r_I \, I(t)\,(1 - P(t)) 
+- I(t) \, y_I(t).
+$$
+
+
+### 3.7. Nash Equilibrium Fixed-Point Iteration
+We perform an iterative procedure:
+1. Start with an initial guess $ b_\text{init}(t) $.  
+2. Solve forward the SEIR system to get $ (S(t), E(t), I(t), P(t)) $.  
+3. Solve backward the costate system to get $ (y_S(t), y_E(t), y_I(t)) $.  
+4. Compute the gradient of the cost wrt $ b(t) $.  
+5. Update $ b(t) $ via a gradient descent step:
+   
+$$
+   b_{\text{new}}(t) = b_{\text{old}}(t) - \eta \,\nabla_{b}J(t),
+   $$
+
+   and clip $ b_{\text{new}}(t) \in [b_\text{min}, \beta_0]. $  
+6. Repeat until convergence or max iterations.
+
+### 3.8. Societal Optimum (Implementation)
+For the societal optimum, we use a similar approach, but the costate equations and gradient reflect **aggregate** costs. In the provided code, we have a placeholder that is structurally similar to the Nash approach, but one would typically replace the costate system with the one derived from a societal-level objective.
+
+### 3.9. Main Execution / Example
+1. **Baseline (No Effort)**: We solve the standard SEIR with $\beta(t) = \beta_0$.  
+2. **Nash Equilibrium**: We run the iterative scheme, printing iteration counts and final cost.  
+3. **Societal Optimum**: We run a second iterative scheme starting from the Nash solution.  
+4. **Plots**: We compare $S(t), E(t), I(t), R(t)$, and $b(t)$ under both solutions. We also plot the cost convergence over iterations.
+
+---
+
+## 4. Dependencies
+
+- **Python >= 3.7**  
+- **NumPy**  
+- **SciPy**  
+- **Matplotlib**  
+
+All can typically be installed via `pip install numpy scipy matplotlib`.
+
+---
+
+## 5. Usage Instructions
+
+1. **Clone or Download** the repository.  
+2. **Install Dependencies** if needed:  
+   ```bash
+   pip install numpy scipy matplotlib
+   ```
+3. **Run the script**:
+   ```bash
+   python seir_nash_vs_societal.py
+   ```
+4. **Output**:
+   - Two windows of figures should appear (if using an interactive environment).  
+     1. **SEIR compartment dynamics** (S, E, I, R) + contact rate $b(t)$.  
+     2. **Cost convergence** plots for Nash vs. Societal.  
+   - An image file `seir_nash_vs_societal.png` is saved with publication-quality resolution.
+
+---
+
+## 6. Reference
+
+1. $\textbf{R. Elie, E. Hubert, G. Turinici}$ “COVID-19 pandemic control: balancing detection policy and lockdown intervention under ICU sustainability” *Mathematical Modelling of Natural Phenomena*, Volume 15. 2020.  
+
